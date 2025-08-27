@@ -37,6 +37,73 @@
   align-items: center;
 }
 
+// Upload button styles
+.upload-container {
+  display: flex;
+  align-items: center;
+}
+
+.btn-upload {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  
+  .icon {
+    font-size: 16px;
+  }
+  
+  &:hover {
+    background: #0056b3;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,123,255,0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.btn-upload-large {
+  background: linear-gradient(145deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+  
+  .icon {
+    font-size: 20px;
+  }
+  
+  &:hover {
+    background: linear-gradient(145deg, #0056b3, #004085);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,123,255,0.4);
+  }
+  
+  &:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+  }
+}
+
 // PDF Viewer Wrapper - Contains all PDF-related components
 .pdf-viewer-wrapper {
   flex: 1;
@@ -1075,6 +1142,45 @@
   padding: 1rem;
   display: flex;
   justify-content: center;
+}
+
+// No PDF state styles
+.no-pdf-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  margin: 1rem;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.no-pdf-content {
+  text-align: center;
+  max-width: 400px;
+  
+  .no-pdf-icon {
+    font-size: 64px;
+    margin-bottom: 24px;
+    opacity: 0.6;
+  }
+  
+  h3 {
+    color: #495057;
+    margin-bottom: 16px;
+    font-size: 24px;
+    font-weight: 600;
+  }
+  
+  p {
+    color: #6c757d;
+    margin-bottom: 32px;
+    font-size: 16px;
+    line-height: 1.5;
+  }
 }
 
 .pdf-viewer {

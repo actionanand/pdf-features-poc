@@ -340,6 +340,99 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
     }
   }
 
+  async onFileSelected(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
+    
+    if (!file) {
+      return;
+    }
+    
+    // Validate file type
+    if (file.type !== 'application/pdf') {
+      this.error = 'Please select a valid PDF file.';
+      return;
+    }
+    
+    // Validate file size (limit to 50MB)
+    const maxSizeInBytes = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSizeInBytes) {
+      this.error = 'File size too large. Please select a PDF file smaller than 50MB.';
+      return;
+    }
+    
+    this.isLoading = true;
+    this.error = null;
+    
+    try {
+      console.log('Loading uploaded PDF file:', file.name);
+      
+      // Read file as ArrayBuffer
+      const arrayBuffer = await this.readFileAsArrayBuffer(file);
+      
+      // Create Uint8Array for PDF.js
+      const uint8Array = new Uint8Array(arrayBuffer);
+      
+      // Store the original data for download
+      this.originalPdfData = arrayBuffer;
+      
+      // Set the PDF source
+      this.pdfSrc = uint8Array;
+      
+      console.log('Uploaded PDF loaded successfully:', file.name);
+      
+      // Reset states for new PDF
+      this.resetPdfStates();
+      
+    } catch (error) {
+      console.error('Error loading uploaded PDF:', error);
+      this.error = 'Failed to load the uploaded PDF file. Please try again.';
+    } finally {
+      this.isLoading = false;
+      // Clear the file input for potential re-upload of the same file
+      target.value = '';
+    }
+  }
+
+  private resetPdfStates() {
+    // Reset current page
+    this.currentPage = 1;
+    
+    // Clear previous data
+    this.thumbnails = [];
+    this.outline = [];
+    this.attachments = [];
+    
+    // Reset sidebar state
+    this.sidebarState = this.sidebarService.hideSidebar();
+    
+    // Clear search
+    this.searchState = {
+      searchText: '',
+      hasSearchResults: false,
+      searchResultsInfo: '',
+      currentSearchMatchIndex: 0,
+      totalSearchMatches: 0
+    };
+    this.searchService.clearSearch();
+  }
+
+  private readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = () => {
+        resolve(reader.result as ArrayBuffer);
+      };
+      
+      reader.onerror = () => {
+        reject(new Error('Failed to read file'));
+      };
+      
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
   async onPdfLoadComplete(pdf: any) {
     this.totalPages = pdf.numPages;
     this.pdfDocument = pdf;
