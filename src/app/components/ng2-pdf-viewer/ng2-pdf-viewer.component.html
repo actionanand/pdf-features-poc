@@ -3,8 +3,38 @@
   <nav class="navbar">
     <div class="nav-content">
       <h2>PDF Viewer Demo</h2>
+
       <div class="nav-actions">
-        <!-- File upload functionality would go here -->
+        <button routerLink="/" class="btn-secondary">
+          ← Back to Home
+        </button>
+        <button routerLink="/extended-pdf-viewer" class="btn-secondary">
+          Extended PDF Viewer
+        </button>
+        <button routerLink="/vanilla-pdfjs" class="btn-secondary">
+          Vanilla PDF.js
+        </button>
+      </div>
+
+      <div class="nav-actions">
+        <!-- File upload functionality -->
+        <div class="upload-container">
+          <input 
+            type="file" 
+            accept=".pdf"
+            (change)="onFileSelected($event)"
+            #fileInput
+            style="display: none"
+            id="pdfFileInput"
+          />
+          <!-- <button 
+            (click)="fileInput.click()" 
+            class="btn-upload"
+            title="Upload PDF File">
+            <span class="icon">📁</span>
+            Upload PDF
+          </button> -->
+        </div>
       </div>
     </div>
   </nav>
@@ -66,6 +96,10 @@
       </div>
 
       <div class="toolbar-section">
+        <button (click)="fileInput.click()" class="btn-toolbar" title="Upload New PDF">
+          <span class="icon">📁</span>
+          Upload
+        </button>
         <button (click)="downloadPdf()" class="btn-toolbar" [disabled]="!pdfSrc" title="Download PDF">
           <span class="icon">💾</span>
           Download
@@ -317,7 +351,13 @@
       <div class="no-pdf-icon">📄</div>
       <h3>No PDF Loaded</h3>
       <p>Please upload a PDF file to get started.</p>
-      <!-- File upload functionality would go here -->
+      <button 
+        (click)="fileInput.click()" 
+        class="btn-upload-large"
+        title="Upload PDF File">
+        <span class="icon">📁</span>
+        Choose PDF File
+      </button>
     </div>
   </div>
 </div>
