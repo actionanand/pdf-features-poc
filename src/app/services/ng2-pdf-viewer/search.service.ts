@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+
 import { PdfViewerComponent } from 'ng2-pdf-viewer';
 
 export interface SearchState {
