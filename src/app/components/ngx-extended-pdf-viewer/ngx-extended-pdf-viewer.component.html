@@ -1,0 +1,174 @@
+<div class="extended-pdf-viewer-container">
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-content">
+      <h2>NGX Extended PDF Viewer</h2>
+      <div class="nav-actions">
+        <button routerLink="/" class="btn-secondary">
+          ← Back to Home
+        </button>
+        <button routerLink="/pdf-viewer" class="btn-secondary">
+          NG2 PDF Viewer
+        </button>
+        <button routerLink="/vanilla-pdfjs" class="btn-secondary">
+          Vanilla PDF.js
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Controls Panel -->
+  <div class="controls-panel">
+    <!-- Search Section -->
+    <div class="control-section">
+      <h3>Text Search</h3>
+      <div class="search-controls">
+        <div class="search-input-group">
+          <input 
+            type="text" 
+            [(ngModel)]="searchText" 
+            placeholder="Enter text to search..."
+            class="search-input"
+            (keyup.enter)="searchForText()"
+          />
+          <button 
+            (click)="searchForText()" 
+            [disabled]="isSearching || !searchText.trim()"
+            class="btn-search">
+            {{ isSearching ? 'Searching...' : 'Search' }}
+          </button>
+          <button 
+            (click)="clearSearch()" 
+            [disabled]="!searchComplete"
+            class="btn-clear">
+            Clear
+          </button>
+        </div>
+        
+        <!-- Search Results Navigation -->
+        <div class="search-results" *ngIf="searchComplete">
+          <div class="search-status">
+            <span *ngIf="searchResults.length > 0">
+              Found {{ searchResults[0].total }} matches 
+              <span *ngIf="searchResults[0].total > 1">
+                ({{ searchResults[0].current }} of {{ searchResults[0].total }})
+              </span>
+            </span>
+            <span *ngIf="searchResults.length === 0" class="no-results">
+              No matches found for "{{ searchText }}"
+            </span>
+          </div>
+          
+          <div class="search-navigation" *ngIf="searchResults.length > 0 && searchResults[0].total > 1">
+            <button (click)="previousSearchResult()" class="btn-nav">Previous</button>
+            <button (click)="nextSearchResult()" class="btn-nav">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="control-section">
+      <h3>Viewer Controls</h3>
+      <div class="control-grid">
+        <label class="toggle-control">
+          <input type="checkbox" [(ngModel)]="showToolbar" />
+          <span>Show Toolbar</span>
+        </label>
+        <label class="toggle-control">
+          <input type="checkbox" [(ngModel)]="showSidebarButton" />
+          <span>Show Sidebar</span>
+        </label>
+        <label class="toggle-control">
+          <input type="checkbox" [(ngModel)]="showFindButton" />
+          <span>Show Find Button</span>
+        </label>
+        <label class="toggle-control">
+          <input type="checkbox" [(ngModel)]="showZoomButtons" />
+          <span>Show Zoom Buttons</span>
+        </label>
+        <label class="toggle-control">
+          <input type="checkbox" [(ngModel)]="showPrintButton" />
+          <span>Show Print Button</span>
+        </label>
+        <label class="toggle-control">
+          <input type="checkbox" [(ngModel)]="showDownloadButton" />
+          <span>Show Download Button</span>
+        </label>
+      </div>
+    </div>
+    
+    <div class="action-buttons">
+      <button (click)="retry()" class="btn-primary" [disabled]="isLoading">
+        {{ isLoading ? 'Loading...' : 'Reload PDF' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading PDF as blob...</p>
+    <small>This may take a moment for larger files</small>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-container">
+    <div class="error-icon">⚠️</div>
+    <h3>Error Loading PDF</h3>
+    <p>{{ error }}</p>
+    <button (click)="retry()" class="btn-primary">Try Again</button>
+  </div>
+
+  <!-- PDF Viewer -->
+  <div class="pdf-viewer-wrapper" *ngIf="pdfSrc && !isLoading && !error">
+    <ngx-extended-pdf-viewer
+      #pdfViewer
+      [src]="pdfSrc"
+      [showToolbar]="showToolbar"
+      [showSidebarButton]="showSidebarButton"
+      [showFindButton]="showFindButton"
+      [showPagingButtons]="showPagingButtons"
+      [showZoomButtons]="showZoomButtons"
+      [showPresentationModeButton]="showPresentationModeButton"
+      [showOpenFileButton]="showOpenFileButton"
+      [showPrintButton]="showPrintButton"
+      [showDownloadButton]="showDownloadButton"
+      [showSecondaryToolbarButton]="showSecondaryToolbarButton"
+      [showRotateButton]="showRotateButton"
+      [showHandToolButton]="showHandToolButton"
+      [showSpreadButton]="showSpreadButton"
+      [showPropertiesButton]="showPropertiesButton"
+      [textLayer]="true"
+      [height]="'80vh'"
+      (pdfLoaded)="onPdfLoaded($event)"
+      (pdfLoadingFailed)="onPdfLoadFailed($event)"
+      (progress)="onProgress($event)"
+      (pagesLoaded)="onPagesLoaded($event)"
+      (textLayerRendered)="onTextLayerRendered($event)"
+      (annotationLayerRendered)="onAnnotationLayerRendered($event)"
+      (pageRendered)="onPageRendered($event)"
+      (pageChange)="onPageChange($event)">
+    </ngx-extended-pdf-viewer>
+
+    <!-- <ngx-extended-pdf-viewer [src]="pdfSrc"></ngx-extended-pdf-viewer> -->
+  </div>
+
+  <!-- PDF Information -->
+  <div class="pdf-info" *ngIf="pdfSrc && !isLoading && !error">
+    <h3>PDF Information</h3>
+    <div class="info-grid">
+      <div class="info-item">
+        <strong>Library:</strong> NGX Extended PDF Viewer
+      </div>
+      <div class="info-item">
+        <!-- <strong>Source:</strong> Loaded as Blob ({{ (pdfSrc as Uint8Array)?.length | number }} bytes) -->
+      </div>
+      <div class="info-item">
+        <strong>Features:</strong> Full-featured PDF.js integration
+      </div>
+      <div class="info-item">
+        <strong>Search:</strong> Built-in text search available
+      </div>
+    </div>
+  </div>
+</div>

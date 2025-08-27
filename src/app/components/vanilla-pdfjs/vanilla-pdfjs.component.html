@@ -1,0 +1,214 @@
+<div class="pdf-viewer-container">
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-content">
+      <h2>Vanilla PDF.js Viewer</h2>
+      <div class="nav-actions">
+        <button routerLink="/" class="btn-secondary">
+          ← Back to Home
+        </button>
+        <button routerLink="/pdf-viewer" class="btn-secondary">
+          Try NG2 Viewer
+        </button>
+        <button routerLink="/extended-pdf-viewer" class="btn-secondary">
+          Try Extended Viewer
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading PDF with vanilla PDF.js...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-container">
+    <p>Error loading PDF: {{error}}</p>
+    <button (click)="loadPdf()" class="btn-primary">Retry</button>
+  </div>
+
+  <!-- PDF Viewer Container (Always Present) -->
+  <div class="pdf-viewer-wrapper">
+    
+    <!-- Enhanced Toolbar -->
+    <div class="pdf-toolbar" *ngIf="showToolbar && pdfDocument && !isLoading && !error">
+      <div class="toolbar-section">
+        <button (click)="toggleThumbnails()" class="btn-toolbar" title="Toggle Thumbnails">
+          <span class="icon">📄</span>
+          {{showThumbnails ? 'Hide' : 'Show'}} Thumbnails
+        </button>
+        <button (click)="toggleContinuousScroll()" class="btn-toolbar" title="Toggle Continuous Scroll">
+          <span class="icon">📜</span>
+          {{continuousScroll ? 'Single Page' : 'Continuous'}}
+        </button>
+        <button (click)="toggleToolbar()" class="btn-toolbar" title="Hide Toolbar">
+          <span class="icon">🔧</span>
+          Hide Toolbar
+        </button>
+      </div>
+      
+      <div class="toolbar-section">
+        <input 
+          type="file" 
+          #fileInput 
+          accept=".pdf,application/pdf" 
+          (change)="onFileSelected($event)"
+          style="display: none"
+        />
+        <button (click)="onUploadPdf()" class="btn-toolbar" title="Upload PDF from Computer">
+          <span class="icon">📁</span>
+          Upload PDF
+        </button>
+        <button (click)="loadDefaultPdf()" class="btn-toolbar" title="Load Sample PDF from URL">
+          <span class="icon">🌐</span>
+          Sample PDF
+        </button>
+      </div>
+      
+      <div class="toolbar-section">
+        <button (click)="previousPage()" [disabled]="currentPage <= 1 || continuousScroll" class="btn-toolbar" title="Previous Page">
+          <span class="icon">◀</span>
+        </button>
+        <input 
+          type="number" 
+          [(ngModel)]="currentPage" 
+          [min]="1" 
+          [max]="totalPages"
+          [disabled]="continuousScroll"
+          (change)="goToPage()"
+          class="page-input-toolbar"
+          title="Current Page"
+        />
+        <span class="page-total">/ {{totalPages}}</span>
+        <button (click)="nextPage()" [disabled]="currentPage >= totalPages || continuousScroll" class="btn-toolbar" title="Next Page">
+          <span class="icon">▶</span>
+        </button>
+      </div>
+      
+      <div class="toolbar-section">
+        <button (click)="zoomOut()" class="btn-toolbar" title="Zoom Out">
+          <span class="icon">🔍-</span>
+        </button>
+        <span class="zoom-display">{{Math.round(zoom * 100)}}%</span>
+        <button (click)="zoomIn()" class="btn-toolbar" title="Zoom In">
+          <span class="icon">🔍+</span>
+        </button>
+        <button (click)="resetZoom()" class="btn-toolbar" title="Reset Zoom">
+          <span class="icon">📐</span>
+          Reset
+        </button>
+      </div>
+      
+      <div class="toolbar-section">
+        <button (click)="rotateCounterClockwise()" class="btn-toolbar" title="Rotate Left">
+          <span class="icon">↶</span>
+        </button>
+        <button (click)="rotateClockwise()" class="btn-toolbar" title="Rotate Right">
+          <span class="icon">↷</span>
+        </button>
+      </div>
+      
+      <div class="toolbar-section">
+        <input 
+          type="text" 
+          [(ngModel)]="searchText" 
+          placeholder="Search in PDF..."
+          class="search-input"
+          (keyup.enter)="performSearch()"
+          (input)="onSearchInputChange()"
+        />
+        <button (click)="performSearch()" class="btn-toolbar" title="Search" [disabled]="isSearching">
+          <span class="icon">🔍</span>
+          {{isSearching ? 'Searching...' : 'Search'}}
+        </button>
+        <button (click)="clearSearch()" class="btn-toolbar" title="Clear Search" [disabled]="!searchText.trim() && searchResults.length === 0">
+          <span class="icon">✕</span>
+          Clear
+        </button>
+        <span *ngIf="searchResults.length > 0" class="search-info">
+          {{currentSearchIndex + 1}} of {{searchResults.length}}
+        </span>
+        <button (click)="previousSearchResult()" [disabled]="searchResults.length === 0" class="btn-toolbar" title="Previous Match">
+          <span class="icon">↑</span>
+        </button>
+        <button (click)="nextSearchResult()" [disabled]="searchResults.length === 0" class="btn-toolbar" title="Next Match">
+          <span class="icon">↓</span>
+        </button>
+      </div>
+      
+      <div class="toolbar-section">
+        <button (click)="downloadPdf()" class="btn-toolbar" title="Download PDF">
+          <span class="icon">💾</span>
+          Download
+        </button>
+        <button (click)="printPdf()" class="btn-toolbar" title="Print PDF">
+          <span class="icon">🖨️</span>
+          Print
+        </button>
+      </div>
+    </div>
+
+    <!-- Show Toolbar Button (when toolbar is hidden) -->
+    <div class="show-toolbar-btn" *ngIf="!showToolbar">
+      <button (click)="toggleToolbar()" class="btn-primary" title="Show Toolbar">
+        Show Toolbar
+      </button>
+    </div>
+
+        <!-- Main Content Area -->
+    <div class="pdf-content">
+      <!-- Thumbnails Sidebar -->
+      <div class="thumbnails-sidebar" *ngIf="showThumbnails && pdfDocument && !isLoading && !error">
+        <div class="sidebar-header">
+          <h3>Pages</h3>
+          <button (click)="toggleThumbnails()" class="btn-close" title="Close Thumbnails">✕</button>
+        </div>
+        <div class="thumbnails-container">
+          <div *ngFor="let thumbnail of thumbnails; let i = index" 
+               class="thumbnail-item" 
+               [class.active]="thumbnail.pageNumber === currentPage"
+               (click)="goToPageFromThumbnail(thumbnail.pageNumber)">
+            <img [src]="thumbnail.dataUrl" 
+                 [alt]="'Page ' + thumbnail.pageNumber"
+                 class="thumbnail-image">
+            <span class="thumbnail-label">{{thumbnail.pageNumber}}</span>
+          </div>
+          <div *ngIf="thumbnails.length === 0 && totalPages > 0" class="thumbnails-loading">
+            <p>Generating thumbnails...</p>
+            <div class="loading-spinner-small"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PDF Viewer Area (Always Present) -->
+      <div class="pdf-viewer-area" [class.with-sidebar]="showThumbnails && pdfDocument && !isLoading && !error">
+        <div class="canvas-container">
+          <div class="text-layer" #textLayer></div>
+          <canvas #pdfCanvas class="pdf-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Remove duplicate canvas elements -->
+
+    <!-- PDF Info Footer -->
+    <div class="pdf-info-footer" *ngIf="pdfDocument && !isLoading && !error">
+      <div class="info-summary">
+        <span><strong>{{totalPages}}</strong> pages</span>
+        <span><strong>{{Math.round(zoom * 100)}}%</strong> zoom</span>
+        <span><strong>{{rotation}}°</strong> rotation</span>
+        <span *ngIf="showThumbnails">Thumbnails visible</span>
+        <span *ngIf="continuousScroll">Continuous scroll</span>
+        <span *ngIf="searchResults.length > 0"><strong>{{searchResults.length}}</strong> search matches</span>
+        <span class="pdf-source">
+          <strong>Source:</strong> {{pdfSource === 'file' ? 'Local File: ' + pdfFileName : 'URL: ' + pdfUrl}}
+        </span>
+        <span>Vanilla PDF.js</span>
+      </div>
+    </div>
+
+  </div>
+
+</div>

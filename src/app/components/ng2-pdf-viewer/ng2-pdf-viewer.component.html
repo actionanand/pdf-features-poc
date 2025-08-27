@@ -1,0 +1,323 @@
+<div class="pdf-viewer-container">
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-content">
+      <h2>PDF Viewer Demo</h2>
+      <div class="nav-actions">
+        <!-- File upload functionality would go here -->
+      </div>
+    </div>
+  </nav>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading PDF...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-container">
+    <p>Error loading PDF: {{error}}</p>
+    <button (click)="loadPdf()" class="btn-primary">Retry</button>
+  </div>
+
+  <!-- PDF Viewer Wrapper - Contains everything PDF related -->
+  <div class="pdf-viewer-wrapper" *ngIf="pdfSrc && !isLoading && !error">
+    
+    <!-- Enhanced Toolbar -->
+    <div class="pdf-toolbar" *ngIf="showToolbar">
+      <div class="toolbar-section">
+        <button (click)="toggleToolbar()" class="btn-toolbar" title="Hide Toolbar">
+          <span class="icon">🔧</span>
+          Hide Toolbar
+        </button>
+      </div>
+      
+      <div class="toolbar-section">
+        <button (click)="previousPage()" [disabled]="currentPage <= 1" class="btn-toolbar" title="Previous Page">
+          <span class="icon">◀</span>
+        </button>
+        <input 
+          type="number" 
+          [(ngModel)]="currentPage" 
+          [min]="1" 
+          [max]="totalPages"
+          (change)="goToPage()"
+          class="page-input-toolbar"
+          title="Current Page"
+        />
+        <span class="page-total">/ {{totalPages}}</span>
+        <button (click)="nextPage()" [disabled]="currentPage >= totalPages" class="btn-toolbar" title="Next Page">
+          <span class="icon">▶</span>
+        </button>
+      </div>
+
+      <div class="toolbar-section">
+        <button (click)="zoomOut()" class="btn-toolbar" title="Zoom Out">
+          <span class="icon">🔍-</span>
+        </button>
+        <span class="zoom-display">{{Math.round(zoom * 100)}}%</span>
+        <button (click)="zoomIn()" class="btn-toolbar" title="Zoom In">
+          <span class="icon">🔍+</span>
+        </button>
+        <button (click)="toggleFitToPage()" class="btn-toolbar" title="Fit to Page">
+          <span class="icon">⚡</span>
+        </button>
+      </div>
+
+      <div class="toolbar-section">
+        <button (click)="downloadPdf()" class="btn-toolbar" [disabled]="!pdfSrc" title="Download PDF">
+          <span class="icon">💾</span>
+          Download
+        </button>
+        <button (click)="printPdf()" class="btn-toolbar" [disabled]="!pdfSrc" title="Print PDF">
+          <span class="icon">🖨</span>
+          Print
+        </button>
+        <button (click)="togglePageMode()" class="btn-toolbar" title="Toggle Page Mode">
+          <span class="icon">{{!showSinglePage ? '📄' : '📜'}}</span>
+          {{!showSinglePage ? 'Single Page' : 'Continuous'}}
+        </button>
+      </div>
+
+      <div class="toolbar-section search-section">
+        <div class="search-container">
+          <input 
+            type="text" 
+            [(ngModel)]="searchState.searchText"
+            (input)="onSearchInputChange()"
+            (keydown.enter)="onSearchEnterKey()"
+            placeholder="Search in PDF..."
+            class="search-input"
+            title="Search Text"
+          />
+          <button 
+            (click)="performSearch()" 
+            class="btn-search" 
+            [disabled]="!searchState.searchText.trim()"
+            title="Search">
+            <span class="icon">🔍</span>
+          </button>
+          <button 
+            (click)="clearSearch()" 
+            class="btn-search" 
+            [style.display]="searchState.searchText ? 'flex' : 'none'"
+            title="Clear Search">
+            <span class="icon">✖</span>
+          </button>
+          <div class="search-navigation" *ngIf="searchState.hasSearchResults">
+            <button 
+              (click)="findPrevious()" 
+              [disabled]="!searchState.hasSearchResults || searchState.currentSearchMatchIndex <= 1"
+              class="btn-search" 
+              title="Previous Match">
+              <span class="icon">↑</span>
+            </button>
+            <span class="match-counter">{{searchState.currentSearchMatchIndex}} / {{searchState.totalSearchMatches}}</span>
+            <button 
+              (click)="findNext()" 
+              [disabled]="!searchState.hasSearchResults || searchState.currentSearchMatchIndex >= searchState.totalSearchMatches"
+              class="btn-search" 
+              title="Next Match">
+              <span class="icon">↓</span>
+            </button>
+          </div>
+          <span class="search-status" *ngIf="searchState.searchText && !searchState.hasSearchResults">
+            {{searchState.searchResultsInfo}}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Show Toolbar Button (when toolbar is hidden) -->
+    <div *ngIf="!showToolbar" class="show-toolbar-btn">
+      <button (click)="toggleToolbar()" class="btn-toolbar" title="Show Toolbar">
+        <span class="icon">👁</span>
+      </button>
+    </div>
+
+    <!-- Main Content Layout -->
+    <div class="main-content">
+      
+      <!-- Left Sidebar Panel -->
+      <div class="left-sidebar-panel">
+        <!-- Sidebar Navigation Tabs -->
+        <div class="sidebar-nav">
+          <button 
+            class="sidebar-nav-btn" 
+            [class.active]="showThumbnails"
+            [attr.data-has-content]="thumbnails.length > 0"
+            (click)="toggleThumbnails()" 
+            title="Pages ({{thumbnails.length}} pages)">
+            <span class="icon">📄</span>
+          </button>
+          <button 
+            class="sidebar-nav-btn" 
+            [class.active]="showIndex"
+            [disabled]="!hasOutline"
+            [attr.data-has-content]="hasOutline"
+            (click)="toggleIndex()" 
+            title="Index{{hasOutline ? ' (Available)' : ' (Not Available)'}}">
+            <span class="icon">📋</span>
+          </button>
+          <button 
+            class="sidebar-nav-btn" 
+            [class.active]="showAttachments"
+            [disabled]="!hasAttachments"
+            [attr.data-has-content]="hasAttachments"
+            (click)="toggleAttachments()" 
+            title="Attachments{{hasAttachments ? ' (' + attachments.length + ')' : ' (Not Available)'}}">
+            <span class="icon">📎</span>
+          </button>
+        </div>
+
+        <!-- Sidebar Content Area -->
+        <div class="sidebar-content-area" *ngIf="showThumbnails || showIndex || showAttachments">
+          
+          <!-- Thumbnails Content -->
+          <div class="sidebar-content" *ngIf="showThumbnails">
+            <div class="sidebar-header">
+              <h4>Pages</h4>
+              <button (click)="toggleThumbnails()" class="btn-close" title="Close">×</button>
+            </div>
+            <div class="thumbnails-container">
+              <div *ngIf="thumbnails.length === 0" class="thumbnails-loading">
+                Loading thumbnails...
+              </div>
+              <div 
+                *ngFor="let thumbnail of thumbnails; let i = index"
+                class="thumbnail-item"
+                [class.active]="thumbnail.pageNumber === currentPage"
+                (click)="currentPage = thumbnail.pageNumber; goToPage()"
+              >
+                <img [src]="thumbnail.dataUrl" [alt]="'Page ' + thumbnail.pageNumber" class="thumbnail-image">
+                <div class="thumbnail-label">Page {{thumbnail.pageNumber}}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Index/Outline Content -->
+          <div class="sidebar-content" *ngIf="showIndex">
+            <div class="sidebar-header">
+              <h4>Index</h4>
+              <button (click)="toggleIndex()" class="btn-close" title="Close">×</button>
+            </div>
+            <div class="outline-container">
+              <div *ngIf="outline.length === 0" class="outline-empty">
+                No outline available
+              </div>
+              <ng-container *ngFor="let item of outline">
+                <ng-container *ngTemplateOutlet="outlineItemTemplate; context: { $implicit: item, level: 0 }"></ng-container>
+              </ng-container>
+            </div>
+          </div>
+
+          <!-- Recursive outline item template -->
+          <ng-template #outlineItemTemplate let-item let-level="level">
+            <div class="outline-item-wrapper">
+              <div 
+                class="outline-item" 
+                [class.outline-item-level-0]="level === 0"
+                [class.outline-item-level-1]="level === 1"
+                [class.outline-item-level-2]="level === 2"
+                [class.outline-item-level-3]="level >= 3"
+                [style.padding-left.px]="level * 16 + 8"
+                [title]="item.title + (item.pageNumber ? ' (Page ' + item.pageNumber + ')' : '')"
+              >
+                <span 
+                  *ngIf="item.items && item.items.length > 0" 
+                  class="outline-toggle"
+                  (click)="toggleOutlineItem(item, $event)"
+                >
+                  {{item.expanded ? '▼' : '▶'}}
+                </span>
+                <span 
+                  *ngIf="!item.items || item.items.length === 0" 
+                  class="outline-toggle-placeholder"
+                ></span>
+                <span 
+                  class="outline-title"
+                  (click)="navigateToOutlineItem(item)"
+                  [class.has-coordinates]="item.destinationCoords"
+                >
+                  {{item.title}}
+                </span>
+                <span 
+                  *ngIf="item.pageNumber" 
+                  class="outline-page"
+                  (click)="navigateToOutlineItem(item)"
+                >{{item.pageNumber}}</span>
+              </div>
+              <div *ngIf="item.expanded && item.items && item.items.length > 0" class="outline-children">
+                <ng-container *ngFor="let child of item.items">
+                  <ng-container *ngTemplateOutlet="outlineItemTemplate; context: { $implicit: child, level: level + 1 }"></ng-container>
+                </ng-container>
+              </div>
+            </div>
+          </ng-template>
+
+          <!-- Attachments Content -->
+          <div class="sidebar-content" *ngIf="showAttachments">
+            <div class="sidebar-header">
+              <h4>Attachments</h4>
+              <button (click)="toggleAttachments()" class="btn-close" title="Close">×</button>
+            </div>
+            <div class="attachments-container">
+              <div *ngIf="attachments.length === 0" class="attachments-empty">
+                No attachments found
+              </div>
+              <div *ngFor="let attachment of attachments" class="attachment-item">
+                <div class="attachment-icon">📎</div>
+                <div class="attachment-info">
+                  <div class="attachment-name" [title]="attachment.filename">{{attachment.filename}}</div>
+                  <div class="attachment-details">
+                    {{formatFileSize(attachment.content.length)}}
+                  </div>
+                </div>
+                <div class="attachment-actions">
+                  <button 
+                    (click)="downloadAttachment(attachment)" 
+                    class="btn-attachment"
+                    title="Download"
+                  >
+                    💾
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+
+      <!-- PDF Viewer Area -->
+      <div class="pdf-viewer-area">
+        <pdf-viewer
+          *ngIf="pdfSrc"
+          [src]="pdfSrc"
+          [render-text]="true"
+          [original-size]="false"
+          [zoom]="zoom"
+          [show-all]="!showSinglePage"
+          [page]="currentPage"
+          (after-load-complete)="onPdfLoadComplete($event)"
+          (page-rendered)="onPageRendered($event)"
+          (error)="onError($event)"
+          (page-change)="onPageChange($event)"
+          style="width: 100%; height: 100%;"
+        ></pdf-viewer>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- No PDF State -->
+  <div *ngIf="!pdfSrc && !isLoading && !error" class="no-pdf-container">
+    <div class="no-pdf-content">
+      <div class="no-pdf-icon">📄</div>
+      <h3>No PDF Loaded</h3>
+      <p>Please upload a PDF file to get started.</p>
+      <!-- File upload functionality would go here -->
+    </div>
+  </div>
+</div>

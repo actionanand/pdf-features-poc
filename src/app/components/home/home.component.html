@@ -1,0 +1,26 @@
+<div class="home-container">
+  <h1>PDF Viewer Demo</h1>
+  <p>Welcome to the PDF Viewer application featuring multiple PDF libraries</p>
+  
+  <div class="viewer-cards">
+    <div 
+      *ngFor="let card of viewerCards" 
+      class="viewer-card"
+      [ngClass]="card.cssClass"
+    >
+      <h3>{{ card.title }}</h3>
+      <p>{{ card.description }}</p>
+      <div class="features">
+        <ul>
+          <li *ngFor="let feature of card.features">{{ feature }}</li>
+        </ul>
+      </div>
+      <button 
+        [routerLink]="card.routeLink" 
+        [class]="card.buttonClass"
+      >
+        {{ card.buttonText }}
+      </button>
+    </div>
+  </div>
+</div>
