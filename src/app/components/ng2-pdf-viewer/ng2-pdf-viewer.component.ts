@@ -1,11 +1,13 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+
 import { PdfViewerComponent } from 'ng2-pdf-viewer';
-import { AttachmentService, AttachmentInfo } from '../../services/attachment.service';
-import { PdfService } from '../../services/pdf.service';
-import { SearchService, SearchState } from '../../services/search.service';
-import { SidebarService, SidebarState } from '../../services/sidebar.service';
-import { ThumbnailService, ThumbnailData } from '../../services/thumbnail.service';
-import { OutlineService, OutlineItem } from '../../services/outline.service';
+
+import { AttachmentService, AttachmentInfo } from '../../services/ng2-pdf-viewer/attachment.service';
+import { PdfService } from '../../services/ng2-pdf-viewer/pdf.service';
+import { SearchService, SearchState } from '../../services/ng2-pdf-viewer/search.service';
+import { SidebarService, SidebarState } from '../../services/ng2-pdf-viewer/sidebar.service';
+import { ThumbnailService, ThumbnailData } from '../../services/ng2-pdf-viewer/thumbnail.service';
+import { OutlineService, OutlineItem } from '../../services/ng2-pdf-viewer/outline.service';
 
 @Component({
   selector: 'app-ng2-pdf-viewer',
