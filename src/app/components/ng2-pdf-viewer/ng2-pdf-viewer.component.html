@@ -3,6 +3,19 @@
   <nav class="navbar">
     <div class="nav-content">
       <h2>PDF Viewer Demo</h2>
+
+      <div class="nav-actions">
+        <button routerLink="/" class="btn-secondary">
+          ← Back to Home
+        </button>
+        <button routerLink="/extended-pdf-viewer" class="btn-secondary">
+          Extended PDF Viewer
+        </button>
+        <button routerLink="/vanilla-pdfjs" class="btn-secondary">
+          Vanilla PDF.js
+        </button>
+      </div>
+
       <div class="nav-actions">
         <!-- File upload functionality -->
         <div class="upload-container">
@@ -14,13 +27,13 @@
             style="display: none"
             id="pdfFileInput"
           />
-          <button 
+          <!-- <button 
             (click)="fileInput.click()" 
             class="btn-upload"
             title="Upload PDF File">
             <span class="icon">📁</span>
             Upload PDF
-          </button>
+          </button> -->
         </div>
       </div>
     </div>
