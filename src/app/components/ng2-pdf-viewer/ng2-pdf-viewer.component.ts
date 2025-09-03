@@ -36,6 +36,7 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
   password = '';
   passwordError = '';
   pendingPdfData: Uint8Array | string | null = null; // Store as Uint8Array to avoid detached ArrayBuffer
+  passwordSubmitted = false; // Track if password has been submitted
   
   // Store event handlers to properly remove them
   private searchMatchesHandler: ((event: any) => void) | null = null;
@@ -457,11 +458,11 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
     this.isLoading = false;
     this.error = null;
     
-    // If this was a password-protected PDF, close the dialog
-    if (this.showPasswordDialog || this.isPasswordProtected) {
-      console.log('Closing password dialog after successful load');
-      this.closePasswordDialog();
+    // Reset password protection flag if it was a password-protected PDF
+    if (this.isPasswordProtected) {
+      console.log('Resetting password protection flag after successful load');
       this.isPasswordProtected = false;
+      this.passwordSubmitted = false; // Reset password submitted flag
     }
     
     // Force change detection to ensure UI updates
@@ -532,12 +533,14 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
     )) {
       this.isPasswordProtected = true;
       
-      // If password dialog is already shown, it means the password was incorrect
-      if (this.showPasswordDialog) {
-        console.log('Password was incorrect, showing error message');
+      // If password was submitted but failed, reopen dialog with error
+      if (this.passwordSubmitted) {
+        console.log('Password was incorrect, showing error message and reopening dialog');
+        this.showPasswordDialog = true;
         this.passwordError = 'Incorrect password. Please try again.';
         this.password = ''; // Clear the incorrect password
         this.isLoading = false;
+        this.passwordSubmitted = false; // Reset the flag
       } else {
         console.log('PDF is password protected, showing password dialog');
         this.showPasswordDialog = true;
@@ -653,6 +656,7 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
     console.log('Submitting password...');
     this.passwordError = '';
     this.isLoading = true;
+    this.passwordSubmitted = true; // Mark that password has been submitted
 
     // Create PDF source with password - ng2-pdf-viewer format
     if (this.pendingPdfData) {
@@ -688,18 +692,14 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
         setTimeout(() => {
           this.pdfSrc = pdfSrcWithPassword;
           console.log('PDF source set with password');
+          
+          // Close the password dialog immediately after setting the source
+          console.log('Closing password dialog after password submission');
+          this.closePasswordDialog();
         }, 100);
         
-        // Add a timeout fallback in case onPdfLoadComplete is not called
-        setTimeout(() => {
-          if (this.showPasswordDialog && this.isLoading) {
-            console.log('Timeout reached, checking if PDF loaded...');
-            // If dialog is still showing after 5 seconds, force close it
-            this.closePasswordDialog();
-          }
-        }, 5000);
-        
-        // Don't close dialog yet - wait for successful load in onPdfLoadComplete
+        // Remove the timeout fallback since we're closing immediately
+        // Don't wait for onPdfLoadComplete - close dialog after password submission
       } catch (error) {
         console.error('Error applying password:', error);
         this.passwordError = 'Error processing password';
@@ -717,6 +717,7 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
     this.password = '';
     this.passwordError = '';
     this.isLoading = false; // Ensure loading is stopped
+    this.passwordSubmitted = false; // Reset password submitted flag
     
     // Force change detection to ensure UI updates
     this.cdr.detectChanges();
