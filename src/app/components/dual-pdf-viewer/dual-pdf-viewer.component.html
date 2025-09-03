@@ -1,13 +1,18 @@
 <div class="dual-pdf-viewer-container">
-  <!-- Top Toolbar -->
+  <!-- Top Navigation Bar -->
+  <div class="nav-bar">
+    <h2>Dual PDF Viewer</h2>
+    <button routerLink="/" class="btn btn-secondary">
+      ← Back to Home
+    </button>
+  </div>
+
+  <!-- PDF Controls Toolbar -->
   <div class="toolbar">
-    <div class="toolbar-section">
-      <h2>Dual PDF Viewer</h2>
-    </div>
-    
-    <div class="toolbar-section toolbar-controls">
-      <!-- Upload Controls -->
-      <div class="upload-group">
+    <!-- Left Side Controls -->
+    <div class="toolbar-section left-controls">
+      <div class="control-row">
+        <!-- Left Upload Control -->
         <input 
           type="file" 
           accept=".pdf"
@@ -18,64 +23,43 @@
         />
         <button 
           (click)="leftFileInput.click()" 
-          class="btn btn-upload"
+          class="btn btn-upload btn-compact"
           title="Upload PDF for Left Panel">
-          📁 Upload Left
+          📁 Upload
         </button>
-        
-        <input 
-          type="file" 
-          accept=".pdf"
-          (change)="onRightFileSelected($event)"
-          #rightFileInput
-          style="display: none"
-          id="rightPdfFileInput"
-        />
-        <button 
-          (click)="rightFileInput.click()" 
-          class="btn btn-upload"
-          title="Upload PDF for Right Panel">
-          📁 Upload Right
-        </button>
-      </div>
 
-      <!-- URL Input Section -->
-      <div class="url-group">
+        <!-- Left URL Input -->
         <div class="url-input-container">
           <input 
             type="text" 
             [(ngModel)]="leftPdfUrl" 
-            placeholder="Left PDF URL (e.g., https://example.com/sample.pdf)"
+            placeholder="Left PDF URL"
             class="url-input"
             (keyup.enter)="loadLeftPdfFromUrl()"
           />
           <button 
             (click)="loadLeftPdfFromUrl()" 
-            class="btn btn-load"
+            class="btn btn-load btn-compact"
             [disabled]="!leftPdfUrl.trim()">
             Load
           </button>
         </div>
-        
-        <div class="url-input-container">
-          <input 
-            type="text" 
-            [(ngModel)]="rightPdfUrl" 
-            placeholder="Right PDF URL (e.g., https://example.com/sample.pdf)"
-            class="url-input"
-            (keyup.enter)="loadRightPdfFromUrl()"
-          />
-          <button 
-            (click)="loadRightPdfFromUrl()" 
-            class="btn btn-load"
-            [disabled]="!rightPdfUrl.trim()">
-            Load
-          </button>
-        </div>
-      </div>
 
+        <!-- Clear Left Control -->
+        <button 
+          (click)="clearLeftPdf()" 
+          class="btn btn-clear btn-compact"
+          [disabled]="!leftPdfSrc"
+          title="Clear Left PDF">
+          ❌ Clear
+        </button>
+      </div>
+    </div>
+
+    <!-- Center Controls -->
+    <div class="toolbar-section center-controls">
       <!-- Link/Unlink Control -->
-      <div class="link-group">
+      <div class="control-group">
         <button 
           (click)="toggleLink()" 
           class="btn"
@@ -86,31 +70,53 @@
           {{ isLinked ? '🔗 Unlink' : '🔗 Link' }}
         </button>
       </div>
-
-      <!-- Clear Controls -->
-      <div class="clear-group">
-        <button 
-          (click)="clearLeftPdf()" 
-          class="btn btn-clear"
-          [disabled]="!leftPdfSrc"
-          title="Clear Left PDF">
-          ❌ Clear Left
-        </button>
-        
-        <button 
-          (click)="clearRightPdf()" 
-          class="btn btn-clear"
-          [disabled]="!rightPdfSrc"
-          title="Clear Right PDF">
-          ❌ Clear Right
-        </button>
-      </div>
     </div>
 
-    <div class="toolbar-section">
-      <button routerLink="/" class="btn btn-secondary">
-        ← Back to Home
-      </button>
+    <!-- Right Side Controls -->
+    <div class="toolbar-section right-controls">
+      <div class="control-row">
+        <!-- Right Upload Control -->
+        <input 
+          type="file" 
+          accept=".pdf"
+          (change)="onRightFileSelected($event)"
+          #rightFileInput
+          style="display: none"
+          id="rightPdfFileInput"
+        />
+        <button 
+          (click)="rightFileInput.click()" 
+          class="btn btn-upload btn-compact"
+          title="Upload PDF for Right Panel">
+          📁 Upload
+        </button>
+
+        <!-- Right URL Input -->
+        <div class="url-input-container">
+          <input 
+            type="text" 
+            [(ngModel)]="rightPdfUrl" 
+            placeholder="Right PDF URL"
+            class="url-input"
+            (keyup.enter)="loadRightPdfFromUrl()"
+          />
+          <button 
+            (click)="loadRightPdfFromUrl()" 
+            class="btn btn-load btn-compact"
+            [disabled]="!rightPdfUrl.trim()">
+            Load
+          </button>
+        </div>
+
+        <!-- Clear Right Control -->
+        <button 
+          (click)="clearRightPdf()" 
+          class="btn btn-clear btn-compact"
+          [disabled]="!rightPdfSrc"
+          title="Clear Right PDF">
+          ❌ Clear
+        </button>
+      </div>
     </div>
   </div>
 
