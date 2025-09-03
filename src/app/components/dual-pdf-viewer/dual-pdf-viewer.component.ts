@@ -44,6 +44,10 @@ export class DualPdfViewerComponent implements OnInit, OnDestroy {
   private leftScrollListener?: () => void;
   private rightScrollListener?: () => void;
 
+  // Page tracking variables
+  private leftPageTracker?: () => void;
+  private rightPageTracker?: () => void;
+
   // Timeout handles for URL loading
   private leftLoadTimeout?: number;
   private rightLoadTimeout?: number;
@@ -54,6 +58,7 @@ export class DualPdfViewerComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.removeScrollListeners();
+    this.removePageTrackers();
     // Clear any pending timeouts
     if (this.leftLoadTimeout) {
       window.clearTimeout(this.leftLoadTimeout);
@@ -167,6 +172,9 @@ export class DualPdfViewerComponent implements OnInit, OnDestroy {
     this.leftTotalPages = event.numPages;
     this.leftCurrentPage = 1;
     this.leftError = null;
+    
+    // Setup page tracking for left PDF
+    setTimeout(() => this.setupLeftPageTracking(), 500);
   }
 
   onRightPdfLoaded(event: any): void {
@@ -180,6 +188,9 @@ export class DualPdfViewerComponent implements OnInit, OnDestroy {
     this.rightTotalPages = event.numPages;
     this.rightCurrentPage = 1;
     this.rightError = null;
+    
+    // Setup page tracking for right PDF
+    setTimeout(() => this.setupRightPageTracking(), 500);
   }
 
   onLeftPdfError(error: any): void {
@@ -339,6 +350,16 @@ export class DualPdfViewerComponent implements OnInit, OnDestroy {
       this.leftLoadTimeout = undefined;
     }
     
+    // Remove left page tracker
+    if (this.leftPageTracker && this.leftContainer) {
+      const leftViewerElement = this.leftContainer.nativeElement.querySelector('pdf-viewer');
+      if (leftViewerElement) {
+        const leftScrollable = leftViewerElement.querySelector('.ng2-pdf-viewer-container') || leftViewerElement;
+        leftScrollable.removeEventListener('scroll', this.leftPageTracker);
+      }
+      this.leftPageTracker = undefined;
+    }
+    
     this.leftPdfSrc = null;
     this.leftCurrentPage = 1;
     this.leftTotalPages = 0;
@@ -352,6 +373,16 @@ export class DualPdfViewerComponent implements OnInit, OnDestroy {
     if (this.rightLoadTimeout) {
       window.clearTimeout(this.rightLoadTimeout);
       this.rightLoadTimeout = undefined;
+    }
+    
+    // Remove right page tracker
+    if (this.rightPageTracker && this.rightContainer) {
+      const rightViewerElement = this.rightContainer.nativeElement.querySelector('pdf-viewer');
+      if (rightViewerElement) {
+        const rightScrollable = rightViewerElement.querySelector('.ng2-pdf-viewer-container') || rightViewerElement;
+        rightScrollable.removeEventListener('scroll', this.rightPageTracker);
+      }
+      this.rightPageTracker = undefined;
     }
     
     this.rightPdfSrc = null;
@@ -384,6 +415,82 @@ export class DualPdfViewerComponent implements OnInit, OnDestroy {
       this.leftZoom = 1.0;
     } else {
       this.rightZoom = 1.0;
+    }
+  }
+
+  // Page tracking methods
+  private setupLeftPageTracking(): void {
+    if (this.leftContainer) {
+      const leftViewerElement = this.leftContainer.nativeElement.querySelector('pdf-viewer');
+      if (leftViewerElement) {
+        const leftScrollable = leftViewerElement.querySelector('.ng2-pdf-viewer-container') || leftViewerElement;
+        
+        this.leftPageTracker = () => {
+          this.updatePageFromScroll(leftScrollable, 'left');
+        };
+        
+        leftScrollable.addEventListener('scroll', this.leftPageTracker);
+      }
+    }
+  }
+
+  private setupRightPageTracking(): void {
+    if (this.rightContainer) {
+      const rightViewerElement = this.rightContainer.nativeElement.querySelector('pdf-viewer');
+      if (rightViewerElement) {
+        const rightScrollable = rightViewerElement.querySelector('.ng2-pdf-viewer-container') || rightViewerElement;
+        
+        this.rightPageTracker = () => {
+          this.updatePageFromScroll(rightScrollable, 'right');
+        };
+        
+        rightScrollable.addEventListener('scroll', this.rightPageTracker);
+      }
+    }
+  }
+
+  private updatePageFromScroll(element: Element, side: 'left' | 'right'): void {
+    try {
+      const scrollTop = element.scrollTop;
+      const scrollHeight = element.scrollHeight;
+      const clientHeight = element.clientHeight;
+      
+      // Calculate current page based on scroll position
+      const totalPages = side === 'left' ? this.leftTotalPages : this.rightTotalPages;
+      if (totalPages > 0 && scrollHeight > clientHeight) {
+        // Calculate which page is currently visible based on scroll position
+        const scrollPercentage = scrollTop / (scrollHeight - clientHeight);
+        const currentPage = Math.max(1, Math.min(totalPages, Math.floor(scrollPercentage * totalPages) + 1));
+        
+        if (side === 'left' && this.leftCurrentPage !== currentPage) {
+          this.leftCurrentPage = currentPage;
+        } else if (side === 'right' && this.rightCurrentPage !== currentPage) {
+          this.rightCurrentPage = currentPage;
+        }
+      }
+    } catch (error) {
+      // Silently handle any errors in page calculation
+      console.warn('Error calculating page from scroll:', error);
+    }
+  }
+
+  private removePageTrackers(): void {
+    if (this.leftPageTracker && this.leftContainer) {
+      const leftViewerElement = this.leftContainer.nativeElement.querySelector('pdf-viewer');
+      if (leftViewerElement) {
+        const leftScrollable = leftViewerElement.querySelector('.ng2-pdf-viewer-container') || leftViewerElement;
+        leftScrollable.removeEventListener('scroll', this.leftPageTracker);
+      }
+      this.leftPageTracker = undefined;
+    }
+    
+    if (this.rightPageTracker && this.rightContainer) {
+      const rightViewerElement = this.rightContainer.nativeElement.querySelector('pdf-viewer');
+      if (rightViewerElement) {
+        const rightScrollable = rightViewerElement.querySelector('.ng2-pdf-viewer-container') || rightViewerElement;
+        rightScrollable.removeEventListener('scroll', this.rightPageTracker);
+      }
+      this.rightPageTracker = undefined;
     }
   }
 }
