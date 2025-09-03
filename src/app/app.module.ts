@@ -11,6 +11,7 @@ import { HomeComponent } from './components/home/home.component';
 import { Ng2PdfViewerComponent } from './components/ng2-pdf-viewer/ng2-pdf-viewer.component';
 import { NgxExtendedPdfViewerComponent } from './components/ngx-extended-pdf-viewer/ngx-extended-pdf-viewer.component';
 import { VanillaPdfjsComponent } from './components/vanilla-pdfjs/vanilla-pdfjs.component';
+import { DualPdfViewerComponent } from './components/dual-pdf-viewer/dual-pdf-viewer.component';
 
 
 @NgModule({
@@ -19,7 +20,8 @@ import { VanillaPdfjsComponent } from './components/vanilla-pdfjs/vanilla-pdfjs.
     HomeComponent,
     Ng2PdfViewerComponent,
     NgxExtendedPdfViewerComponent,
-    VanillaPdfjsComponent
+    VanillaPdfjsComponent,
+    DualPdfViewerComponent
   ],
   imports: [
     BrowserModule,

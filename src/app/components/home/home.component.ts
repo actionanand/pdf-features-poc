@@ -41,6 +41,25 @@ export class HomeComponent {
       buttonClass: 'btn-primary'
     },
     {
+      title: 'Dual PDF Viewer',
+      description: 'Side-by-side PDF viewer with synchronized scrolling',
+      features: [
+        'Two-column PDF comparison',
+        'File upload for both sides',
+        'URL loading support',
+        'Link/unlink scrolling',
+        'Synchronized page navigation',
+        'Individual zoom controls',
+        'Independent loading states',
+        'Responsive design',
+        'Clear and reset functions'
+      ],
+      routeLink: '/dual-pdf-viewer',
+      buttonText: 'Try Dual PDF Viewer',
+      cssClass: 'dual-viewer',
+      buttonClass: 'btn-primary dual-btn'
+    },
+    {
       title: 'NGX Extended PDF Viewer',
       description: 'Full-featured PDF viewer with advanced capabilities',
       features: [
