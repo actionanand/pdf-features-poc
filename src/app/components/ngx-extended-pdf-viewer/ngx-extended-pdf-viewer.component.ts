@@ -1,6 +1,8 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
+import { environment as env } from '../../../environments/environment';
+
 @Component({
   selector: 'app-ngx-extended-pdf-viewer',
   templateUrl: './ngx-extended-pdf-viewer.component.html',
@@ -9,7 +11,7 @@ import { HttpClient } from '@angular/common/http';
 export class NgxExtendedPdfViewerComponent implements OnInit, AfterViewInit {
   @ViewChild('pdfViewer', { static: false }) pdfViewer!: ElementRef;
   
-  pdfSrc: string | Uint8Array | null = 'https://vadimdez.github.io/ng2-pdf-viewer/assets/pdf-test.pdf';
+  pdfSrc: string | Uint8Array | null = env.pdfUrlDefault;
   isLoading = false;
   error: string | null = null;
   pdfDocument: any = null;

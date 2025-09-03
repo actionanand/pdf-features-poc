@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
 
 import { PdfViewerComponent } from 'ng2-pdf-viewer';
 
@@ -8,6 +8,7 @@ import { SearchService, SearchState } from '../../services/ng2-pdf-viewer/search
 import { SidebarService, SidebarState } from '../../services/ng2-pdf-viewer/sidebar.service';
 import { ThumbnailService, ThumbnailData } from '../../services/ng2-pdf-viewer/thumbnail.service';
 import { OutlineService, OutlineItem } from '../../services/ng2-pdf-viewer/outline.service';
+import { environment as env } from '../../../environments/environment';
 
 @Component({
   selector: 'app-ng2-pdf-viewer',
@@ -15,7 +16,7 @@ import { OutlineService, OutlineItem } from '../../services/ng2-pdf-viewer/outli
   styleUrls: ['./ng2-pdf-viewer.component.scss']
 })
 export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
-  pdfSrc: string | Uint8Array | null = null;
+  pdfSrc: string | Uint8Array | any | null = null; // Allow password object format
   originalPdfData: ArrayBuffer | null = null; // Store original PDF data for download
   currentPage = 1;
   totalPages = 0;
@@ -28,6 +29,13 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
   pdfDocument: any = null;
   showSinglePage = false; // Start in continuous mode (show-all = true)
   showToolbar = true;
+  
+  // Password protection properties
+  isPasswordProtected = false;
+  showPasswordDialog = false;
+  password = '';
+  passwordError = '';
+  pendingPdfData: Uint8Array | string | null = null; // Store as Uint8Array to avoid detached ArrayBuffer
   
   // Store event handlers to properly remove them
   private searchMatchesHandler: ((event: any) => void) | null = null;
@@ -74,8 +82,8 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
   @ViewChild(PdfViewerComponent)
   private pdfComponent!: PdfViewerComponent;
 
-  readonly pdfUrl = 'https://vadimdez.github.io/ng2-pdf-viewer/assets/pdf-test.pdf';
-  // readonly pdfUrl = 'http://localhost:5201/api/v1/static/pdf/local';
+  // readonly pdfUrl = env.pdfUrlLocal;
+  readonly pdfUrl = env.pdfUrlDefault;
 
   constructor(
     private attachmentService: AttachmentService,
@@ -83,7 +91,8 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
     private searchService: SearchService,
     private sidebarService: SidebarService,
     private thumbnailService: ThumbnailService,
-    private outlineService: OutlineService
+    private outlineService: OutlineService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -365,6 +374,8 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
     
     this.isLoading = true;
     this.error = null;
+    this.isPasswordProtected = false;
+    this.showPasswordDialog = false;
     
     try {
       console.log('Loading uploaded PDF file:', file.name);
@@ -375,11 +386,13 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
       // Create Uint8Array for PDF.js
       const uint8Array = new Uint8Array(arrayBuffer);
       
-      // Store the original data for download
+      // Store the original data for download and password handling
       this.originalPdfData = arrayBuffer;
+      this.pendingPdfData = uint8Array; // Store as Uint8Array to avoid detached ArrayBuffer issues
       
-      // Set the PDF source
-      this.pdfSrc = uint8Array;
+      // Try to set the PDF source (create a fresh copy to prevent detachment)
+      const pdfDataCopy = new Uint8Array(uint8Array);
+      this.pdfSrc = pdfDataCopy;
       
       console.log('Uploaded PDF loaded successfully:', file.name);
       
@@ -440,6 +453,20 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
     this.pdfDocument = pdf;
     console.log('PDF load complete. Total pages:', this.totalPages);
     
+    // Clear loading state and errors
+    this.isLoading = false;
+    this.error = null;
+    
+    // If this was a password-protected PDF, close the dialog
+    if (this.showPasswordDialog || this.isPasswordProtected) {
+      console.log('Closing password dialog after successful load');
+      this.closePasswordDialog();
+      this.isPasswordProtected = false;
+    }
+    
+    // Force change detection to ensure UI updates
+    this.cdr.detectChanges();
+    
     // Generate thumbnails after PDF is loaded
     await this.generateThumbnails();
     
@@ -493,7 +520,38 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
 
   onError(error: any) {
     console.error('PDF viewer error:', error);
-    this.error = 'Error displaying PDF';
+    
+    // Check if this is a password-related error
+    if (error && (
+      error.name === 'PasswordException' ||
+      error.message?.includes('password') ||
+      error.message?.includes('PasswordException') ||
+      error.message?.includes('Invalid password') ||
+      error.message?.includes('No password given') ||
+      error.code === 1 // PDF.js password error code
+    )) {
+      this.isPasswordProtected = true;
+      
+      // If password dialog is already shown, it means the password was incorrect
+      if (this.showPasswordDialog) {
+        console.log('Password was incorrect, showing error message');
+        this.passwordError = 'Incorrect password. Please try again.';
+        this.password = ''; // Clear the incorrect password
+        this.isLoading = false;
+      } else {
+        console.log('PDF is password protected, showing password dialog');
+        this.showPasswordDialog = true;
+        this.passwordError = '';
+        this.isLoading = false;
+      }
+      
+      this.error = null; // Clear general error since we're handling password
+    } else {
+      this.error = 'Error displaying PDF: ' + (error.message || error);
+      this.isPasswordProtected = false;
+      this.showPasswordDialog = false;
+      this.isLoading = false;
+    }
   }
 
   previousPage() {
@@ -583,6 +641,94 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
 
   toggleToolbar() {
     this.showToolbar = !this.showToolbar;
+  }
+
+  // Password protection methods
+  submitPassword() {
+    if (!this.password.trim()) {
+      this.passwordError = 'Please enter a password';
+      return;
+    }
+
+    console.log('Submitting password...');
+    this.passwordError = '';
+    this.isLoading = true;
+
+    // Create PDF source with password - ng2-pdf-viewer format
+    if (this.pendingPdfData) {
+      try {
+        // Create a fresh copy of the data to prevent ArrayBuffer detachment issues
+        let pdfDataCopy: Uint8Array;
+        
+        if (this.pendingPdfData instanceof Uint8Array) {
+          // Create a new Uint8Array copy from the existing data
+          pdfDataCopy = new Uint8Array(this.pendingPdfData);
+        } else {
+          // If it's a string, use it directly
+          pdfDataCopy = this.pendingPdfData as any;
+        }
+        
+        console.log('Creating PDF source with password. Data type:', typeof pdfDataCopy);
+        console.log('Is Uint8Array:', pdfDataCopy instanceof Uint8Array);
+        console.log('Data length:', pdfDataCopy.length);
+        console.log('Password provided:', !!this.password);
+        
+        // ng2-pdf-viewer expects this specific format for password-protected PDFs
+        const pdfSrcWithPassword = {
+          data: pdfDataCopy,
+          password: this.password
+        };
+        
+        console.log('Setting PDF source with password, dialog should remain open until success');
+        
+        // Clear the current src first to force reload
+        this.pdfSrc = null;
+        
+        // Set new source with password after a brief delay
+        setTimeout(() => {
+          this.pdfSrc = pdfSrcWithPassword;
+          console.log('PDF source set with password');
+        }, 100);
+        
+        // Add a timeout fallback in case onPdfLoadComplete is not called
+        setTimeout(() => {
+          if (this.showPasswordDialog && this.isLoading) {
+            console.log('Timeout reached, checking if PDF loaded...');
+            // If dialog is still showing after 5 seconds, force close it
+            this.closePasswordDialog();
+          }
+        }, 5000);
+        
+        // Don't close dialog yet - wait for successful load in onPdfLoadComplete
+      } catch (error) {
+        console.error('Error applying password:', error);
+        this.passwordError = 'Error processing password';
+        this.isLoading = false;
+      }
+    } else {
+      this.passwordError = 'No PDF data available';
+      this.isLoading = false;
+    }
+  }
+
+  closePasswordDialog() {
+    console.log('Closing password dialog');
+    this.showPasswordDialog = false;
+    this.password = '';
+    this.passwordError = '';
+    this.isLoading = false; // Ensure loading is stopped
+    
+    // Force change detection to ensure UI updates
+    this.cdr.detectChanges();
+  }
+
+  cancelPasswordDialog() {
+    this.closePasswordDialog();
+    this.pdfSrc = null;
+    this.pendingPdfData = null;
+    this.isPasswordProtected = false;
+    this.isLoading = false;
+    this.error = null;
   }
 
   async generateThumbnails() {

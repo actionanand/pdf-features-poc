@@ -4,6 +4,8 @@ import { HttpClient } from '@angular/common/http';
 // Import PDF.js
 import * as pdfjsLib from 'pdfjs-dist';
 
+import { environment as env } from '../../../environments/environment';
+
 // Configure PDF.js worker - use the .mjs file from ngx-extended-pdf-viewer assets
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/assets/pdf.worker.min.mjs';
 
@@ -46,7 +48,7 @@ export class VanillaPdfjsComponent implements OnInit, AfterViewInit, OnDestroy {
   currentSearchIndex = 0;
   
   // PDF source management
-  pdfUrl = 'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf';
+  pdfUrl = env.pdfUrlMozilla;
   pdfSource: 'url' | 'file' = 'url'; // Track whether PDF is from URL or file
   pdfFileName: string | null = null; // Store uploaded file name
   uploadedPdfData: ArrayBuffer | null = null; // Store uploaded file data

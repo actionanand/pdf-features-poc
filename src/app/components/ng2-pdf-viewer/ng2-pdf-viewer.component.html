@@ -51,6 +51,44 @@
     <button (click)="loadPdf()" class="btn-primary">Retry</button>
   </div>
 
+  <!-- Password Dialog -->
+  <div *ngIf="showPasswordDialog" class="password-dialog-overlay">
+    <div class="password-dialog">
+      <div class="password-dialog-header">
+        <h3>Password Protected PDF</h3>
+        <p>This PDF requires a password to open.</p>
+      </div>
+      
+      <div class="password-dialog-body">
+        <div class="password-input-group">
+          <label for="pdfPassword">Enter Password:</label>
+          <input 
+            type="password" 
+            id="pdfPassword"
+            [(ngModel)]="password"
+            (keyup.enter)="submitPassword()"
+            placeholder="Enter password"
+            class="password-input"
+            [class.error]="passwordError"
+            autofocus
+          />
+          <div *ngIf="passwordError" class="password-error">
+            {{ passwordError }}
+          </div>
+        </div>
+      </div>
+      
+      <div class="password-dialog-footer">
+        <button (click)="cancelPasswordDialog()" class="btn-secondary">
+          Cancel
+        </button>
+        <button (click)="submitPassword()" class="btn-primary" [disabled]="!password.trim()">
+          Open PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- PDF Viewer Wrapper - Contains everything PDF related -->
   <div class="pdf-viewer-wrapper" *ngIf="pdfSrc && !isLoading && !error">
     
