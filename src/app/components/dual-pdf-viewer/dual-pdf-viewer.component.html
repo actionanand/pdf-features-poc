@@ -1,0 +1,255 @@
+<div class="dual-pdf-viewer-container">
+  <!-- Top Navigation Bar -->
+  <div class="nav-bar">
+    <h2>Dual PDF Viewer</h2>
+    <button routerLink="/" class="btn btn-secondary">
+      ← Back to Home
+    </button>
+  </div>
+
+  <!-- PDF Controls Toolbar -->
+  <div class="toolbar">
+    <!-- Link Visualization Container -->
+    <div class="link-visualization-container" [class.linked]="isLinked">
+      
+      <!-- Left Side Controls -->
+      <div class="toolbar-section left-controls" [class.linked-border]="isLinked">
+        <div class="control-row">
+          <!-- Left Upload Control -->
+          <input 
+            type="file" 
+            accept=".pdf"
+            (change)="onLeftFileSelected($event)"
+            #leftFileInput
+            style="display: none"
+            id="leftPdfFileInput"
+          />
+          <button 
+            (click)="leftFileInput.click()" 
+            class="btn btn-upload btn-compact"
+            title="Upload PDF for Left Panel">
+            📁 Upload
+          </button>
+
+          <!-- Left URL Input -->
+          <div class="url-input-container">
+            <input 
+              type="text" 
+              [(ngModel)]="leftPdfUrl" 
+              placeholder="Left PDF URL"
+              class="url-input"
+              (keyup.enter)="loadLeftPdfFromUrl()"
+            />
+            <button 
+              (click)="loadLeftPdfFromUrl()" 
+              class="btn btn-load btn-compact"
+              [disabled]="!leftPdfUrl.trim()">
+              Load
+            </button>
+          </div>
+
+          <!-- Clear Left Control -->
+          <button 
+            (click)="clearLeftPdf()" 
+            class="btn btn-clear btn-compact"
+            [disabled]="!leftPdfSrc"
+            title="Clear Left PDF">
+            ❌ Clear
+          </button>
+        </div>
+      </div>
+
+      <!-- Chain Connector -->
+      <div class="chain-connector" *ngIf="isLinked">
+        <div class="chain-segment"></div>
+        <div class="chain-segment"></div>
+        <div class="chain-segment"></div>
+      </div>
+
+      <!-- Center Controls -->
+      <div class="toolbar-section center-controls">
+        <!-- Link/Unlink Control -->
+        <div class="control-group">
+          <button 
+            (click)="toggleLink()" 
+            class="btn link-button"
+            [class.btn-linked]="isLinked"
+            [class.btn-unlinked]="!isLinked"
+            [disabled]="!leftPdfSrc || !rightPdfSrc"
+            title="{{ isLinked ? 'Unlink scrolling' : 'Link scrolling' }}">
+            <span class="link-icon" [class.linked]="isLinked" [class.unlinked]="!isLinked">
+              {{ isLinked ? '🔗' : '⛓️‍💥' }}
+            </span>
+            {{ isLinked ? 'Unlink' : 'Link' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Side Controls -->
+      <div class="toolbar-section right-controls" [class.linked-border]="isLinked">
+      <div class="control-row">
+        <!-- Right Upload Control -->
+        <input 
+          type="file" 
+          accept=".pdf"
+          (change)="onRightFileSelected($event)"
+          #rightFileInput
+          style="display: none"
+          id="rightPdfFileInput"
+        />
+        <button 
+          (click)="rightFileInput.click()" 
+          class="btn btn-upload btn-compact"
+          title="Upload PDF for Right Panel">
+          📁 Upload
+        </button>
+
+        <!-- Right URL Input -->
+        <div class="url-input-container">
+          <input 
+            type="text" 
+            [(ngModel)]="rightPdfUrl" 
+            placeholder="Right PDF URL"
+            class="url-input"
+            (keyup.enter)="loadRightPdfFromUrl()"
+          />
+          <button 
+            (click)="loadRightPdfFromUrl()" 
+            class="btn btn-load btn-compact"
+            [disabled]="!rightPdfUrl.trim()">
+            Load
+          </button>
+        </div>
+
+        <!-- Clear Right Control -->
+        <button 
+          (click)="clearRightPdf()" 
+          class="btn btn-clear btn-compact"
+          [disabled]="!rightPdfSrc"
+          title="Clear Right PDF">
+          ❌ Clear
+        </button>
+      </div>
+    </div>
+    
+    </div> <!-- Close link-visualization-container -->
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="content-area" [class.linked]="isLinked">
+    
+    <!-- Left Column -->
+    <div class="pdf-column" #leftContainer>
+      <div class="column-header">
+        <h3>Left PDF</h3>
+        <div class="column-controls">
+          <!-- Page Info -->
+          <div class="page-info" *ngIf="leftTotalPages > 0">
+            Page {{ leftCurrentPage }} of {{ leftTotalPages }}
+          </div>
+          
+          <!-- Zoom Controls -->
+          <div class="zoom-controls" *ngIf="leftPdfSrc">
+            <button (click)="zoomOut('left')" class="btn btn-sm" title="Zoom Out">−</button>
+            <span class="zoom-level">{{ (leftZoom * 100).toFixed(0) }}%</span>
+            <button (click)="zoomIn('left')" class="btn btn-sm" title="Zoom In">+</button>
+            <button (click)="resetZoom('left')" class="btn btn-sm" title="Reset Zoom">⟲</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="pdf-content">
+        <!-- Loading State -->
+        <div *ngIf="leftLoading || (leftPdfSrc && leftTotalPages === 0 && !leftError)" class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>Loading PDF...</p>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="leftError" class="error-container">
+          <p>{{ leftError }}</p>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!leftPdfSrc && !leftLoading && !leftError" class="empty-state">
+          <div class="empty-icon">📄</div>
+          <p>Upload a PDF file or enter a URL above</p>
+        </div>
+
+        <!-- PDF Viewer -->
+        <pdf-viewer
+          *ngIf="leftPdfSrc && !leftError"
+          #leftPdfViewer
+          [src]="leftPdfSrc"
+          [zoom]="leftZoom"
+          [page]="leftCurrentPage"
+          [show-all]="true"
+          [fit-to-page]="false"
+          [original-size]="false"
+          (after-load-complete)="onLeftPdfLoaded($event)"
+          (error)="onLeftPdfError($event)"
+          (page-change)="onLeftPageChange($event)"
+          (progress)="onLeftPdfProgress($event)"
+          class="pdf-viewer">
+        </pdf-viewer>
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="pdf-column" #rightContainer>
+      <div class="column-header">
+        <h3>Right PDF</h3>
+        <div class="column-controls">
+          <!-- Page Info -->
+          <div class="page-info" *ngIf="rightTotalPages > 0">
+            Page {{ rightCurrentPage }} of {{ rightTotalPages }}
+          </div>
+          
+          <!-- Zoom Controls -->
+          <div class="zoom-controls" *ngIf="rightPdfSrc">
+            <button (click)="zoomOut('right')" class="btn btn-sm" title="Zoom Out">−</button>
+            <span class="zoom-level">{{ (rightZoom * 100).toFixed(0) }}%</span>
+            <button (click)="zoomIn('right')" class="btn btn-sm" title="Zoom In">+</button>
+            <button (click)="resetZoom('right')" class="btn btn-sm" title="Reset Zoom">⟲</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="pdf-content">
+        <!-- Loading State -->
+        <div *ngIf="rightLoading || (rightPdfSrc && rightTotalPages === 0 && !rightError)" class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>Loading PDF...</p>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="rightError" class="error-container">
+          <p>{{ rightError }}</p>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!rightPdfSrc && !rightLoading && !rightError" class="empty-state">
+          <div class="empty-icon">📄</div>
+          <p>Upload a PDF file or enter a URL above</p>
+        </div>
+
+        <!-- PDF Viewer -->
+        <pdf-viewer
+          *ngIf="rightPdfSrc && !rightError"
+          #rightPdfViewer
+          [src]="rightPdfSrc"
+          [zoom]="rightZoom"
+          [page]="rightCurrentPage"
+          [show-all]="true"
+          [fit-to-page]="false"
+          [original-size]="false"
+          (after-load-complete)="onRightPdfLoaded($event)"
+          (error)="onRightPdfError($event)"
+          (page-change)="onRightPageChange($event)"
+          (progress)="onRightPdfProgress($event)"
+          class="pdf-viewer">
+        </pdf-viewer>
+      </div>
+    </div>
+  </div>
+</div>
