@@ -9,71 +9,84 @@
 
   <!-- PDF Controls Toolbar -->
   <div class="toolbar">
-    <!-- Left Side Controls -->
-    <div class="toolbar-section left-controls">
-      <div class="control-row">
-        <!-- Left Upload Control -->
-        <input 
-          type="file" 
-          accept=".pdf"
-          (change)="onLeftFileSelected($event)"
-          #leftFileInput
-          style="display: none"
-          id="leftPdfFileInput"
-        />
-        <button 
-          (click)="leftFileInput.click()" 
-          class="btn btn-upload btn-compact"
-          title="Upload PDF for Left Panel">
-          📁 Upload
-        </button>
-
-        <!-- Left URL Input -->
-        <div class="url-input-container">
+    <!-- Link Visualization Container -->
+    <div class="link-visualization-container" [class.linked]="isLinked">
+      
+      <!-- Left Side Controls -->
+      <div class="toolbar-section left-controls" [class.linked-border]="isLinked">
+        <div class="control-row">
+          <!-- Left Upload Control -->
           <input 
-            type="text" 
-            [(ngModel)]="leftPdfUrl" 
-            placeholder="Left PDF URL"
-            class="url-input"
-            (keyup.enter)="loadLeftPdfFromUrl()"
+            type="file" 
+            accept=".pdf"
+            (change)="onLeftFileSelected($event)"
+            #leftFileInput
+            style="display: none"
+            id="leftPdfFileInput"
           />
           <button 
-            (click)="loadLeftPdfFromUrl()" 
-            class="btn btn-load btn-compact"
-            [disabled]="!leftPdfUrl.trim()">
-            Load
+            (click)="leftFileInput.click()" 
+            class="btn btn-upload btn-compact"
+            title="Upload PDF for Left Panel">
+            📁 Upload
+          </button>
+
+          <!-- Left URL Input -->
+          <div class="url-input-container">
+            <input 
+              type="text" 
+              [(ngModel)]="leftPdfUrl" 
+              placeholder="Left PDF URL"
+              class="url-input"
+              (keyup.enter)="loadLeftPdfFromUrl()"
+            />
+            <button 
+              (click)="loadLeftPdfFromUrl()" 
+              class="btn btn-load btn-compact"
+              [disabled]="!leftPdfUrl.trim()">
+              Load
+            </button>
+          </div>
+
+          <!-- Clear Left Control -->
+          <button 
+            (click)="clearLeftPdf()" 
+            class="btn btn-clear btn-compact"
+            [disabled]="!leftPdfSrc"
+            title="Clear Left PDF">
+            ❌ Clear
           </button>
         </div>
-
-        <!-- Clear Left Control -->
-        <button 
-          (click)="clearLeftPdf()" 
-          class="btn btn-clear btn-compact"
-          [disabled]="!leftPdfSrc"
-          title="Clear Left PDF">
-          ❌ Clear
-        </button>
       </div>
-    </div>
 
-    <!-- Center Controls -->
-    <div class="toolbar-section center-controls">
-      <!-- Link/Unlink Control -->
-      <div class="control-group">
-        <button 
-          (click)="toggleLink()" 
-          class="btn"
-          [class.btn-linked]="isLinked"
-          [class.btn-unlinked]="!isLinked"
-          [disabled]="!leftPdfSrc || !rightPdfSrc"
-          title="{{ isLinked ? 'Unlink scrolling' : 'Link scrolling' }}">
-          {{ isLinked ? '🔗 Unlink' : '🔗 Link' }}
-        </button>
+      <!-- Chain Connector -->
+      <div class="chain-connector" *ngIf="isLinked">
+        <div class="chain-segment"></div>
+        <div class="chain-segment"></div>
+        <div class="chain-segment"></div>
       </div>
-    </div>
 
-    <!-- Right Side Controls -->
-    <div class="toolbar-section right-controls">
+      <!-- Center Controls -->
+      <div class="toolbar-section center-controls">
+        <!-- Link/Unlink Control -->
+        <div class="control-group">
+          <button 
+            (click)="toggleLink()" 
+            class="btn link-button"
+            [class.btn-linked]="isLinked"
+            [class.btn-unlinked]="!isLinked"
+            [disabled]="!leftPdfSrc || !rightPdfSrc"
+            title="{{ isLinked ? 'Unlink scrolling' : 'Link scrolling' }}">
+            <span class="link-icon" [class.linked]="isLinked" [class.unlinked]="!isLinked">
+              {{ isLinked ? '🔗' : '⛓️‍💥' }}
+            </span>
+            {{ isLinked ? 'Unlink' : 'Link' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Side Controls -->
+      <div class="toolbar-section right-controls" [class.linked-border]="isLinked">
       <div class="control-row">
         <!-- Right Upload Control -->
         <input 
@@ -118,10 +131,13 @@
         </button>
       </div>
     </div>
+    
+    </div> <!-- Close link-visualization-container -->
   </div>
 
   <!-- Main Content Area -->
-  <div class="content-area">
+  <div class="content-area" [class.linked]="isLinked">
+    
     <!-- Left Column -->
     <div class="pdf-column" #leftContainer>
       <div class="column-header">
