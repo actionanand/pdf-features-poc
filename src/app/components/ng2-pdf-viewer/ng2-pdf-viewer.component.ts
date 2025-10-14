@@ -97,10 +97,13 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.loadPdf();
-    
-    // Subscribe to service state changes
-    this.updateServiceStates();
+  this.loadPdf();
+
+  // Subscribe to service state changes
+  this.updateServiceStates();
+
+  // Listen for Ctrl+F to focus custom search box
+  window.addEventListener('keydown', this.handleCtrlF);
   }
 
   ngOnDestroy() {
@@ -113,13 +116,41 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
         this.pdfComponent.eventBus.off('pagechanging', this.pageChangingHandler);
       }
     }
-    
+
+  // Remove Ctrl+F listener
+    window.removeEventListener('keydown', this.handleCtrlF);
     // Clean up timeout
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
       this.searchTimeout = null;
     }
   }
+
+  /**
+   * Handle Ctrl+F to focus custom PDF search box
+   */
+  private handleCtrlF = (event: KeyboardEvent) => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') {
+      event.preventDefault();
+      // Show toolbar if hidden
+      if (!this.showToolbar) {
+        this.showToolbar = true;
+        this.cdr.detectChanges();
+      }
+      // Focus the search input in the toolbar
+      const tryFocusInput = (attempts = 0) => {
+        const input = document.querySelector('.pdf-toolbar .search-input') as HTMLInputElement;
+        if (input && input.offsetParent !== null) {
+          input.focus();
+          input.select();
+        } else if (attempts < 5) {
+          setTimeout(() => tryFocusInput(attempts + 1), 100);
+        }
+      };
+      tryFocusInput();
+    }
+  };
+
   
   private updateServiceStates() {
     this.searchState = this.searchService.getSearchState();
