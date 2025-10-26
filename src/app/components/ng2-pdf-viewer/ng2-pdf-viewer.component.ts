@@ -102,8 +102,11 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
   // Subscribe to service state changes
   this.updateServiceStates();
 
-  // Listen for Ctrl+F to focus custom search box
-  window.addEventListener('keydown', this.handleCtrlF);
+  // Listen for Ctrl+F only when PDF area is focused
+  // browser ctr + F only be detected by 
+  // window.addEventListener('keydown', this.handleCtrlF, true); 
+  // not by document.addEventListener('keydown', this.handleCtrlF, true);
+  window.addEventListener('keydown', this.handleCtrlF, true);
   }
 
   ngOnDestroy() {
@@ -118,7 +121,7 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
     }
 
   // Remove Ctrl+F listener
-    window.removeEventListener('keydown', this.handleCtrlF);
+  window.removeEventListener('keydown', this.handleCtrlF, true);
     // Clean up timeout
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
@@ -127,27 +130,47 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Handle Ctrl+F to focus custom PDF search box
+   * Handle Ctrl+F to focus custom PDF search box only if PDF area is focused
    */
   private handleCtrlF = (event: KeyboardEvent) => {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') {
-      event.preventDefault();
-      // Show toolbar if hidden
-      if (!this.showToolbar) {
-        this.showToolbar = true;
-        this.cdr.detectChanges();
-      }
-      // Focus the search input in the toolbar
-      const tryFocusInput = (attempts = 0) => {
-        const input = document.querySelector('.pdf-toolbar .search-input') as HTMLInputElement;
-        if (input && input.offsetParent !== null) {
-          input.focus();
-          input.select();
-        } else if (attempts < 5) {
-          setTimeout(() => tryFocusInput(attempts + 1), 100);
+      // Check if PDF area or toolbar is focused
+      const pdfArea = document.querySelector('.pdf-viewer-area');
+      const active = document.activeElement;
+      if (pdfArea && (pdfArea.contains(active) || (active && active.classList.contains('search-input')))) {
+        event.preventDefault();
+        // Show toolbar if hidden
+        if (!this.showToolbar) {
+          this.showToolbar = true;
+          this.cdr.detectChanges();
         }
-      };
-      tryFocusInput();
+        // Focus the search input in the toolbar
+        const tryFocusInput = (attempts = 0) => {
+          const input = document.querySelector('.pdf-toolbar .search-input') as HTMLInputElement;
+          if (input && input.offsetParent !== null) {
+            input.focus();
+            input.select();
+/*          // use this if browser search is still triggered
+            // Workaround: dispatch 'Escape' key event to close browser search after 1 second
+            setTimeout(() => {
+              const escEvent = new KeyboardEvent('keydown', {
+                key: 'Escape',
+                code: 'Escape',
+                keyCode: 27,
+                which: 27,
+                bubbles: true,
+                cancelable: true
+              });
+              document.dispatchEvent(escEvent);
+            }, 1000);
+*/
+          } else if (attempts < 5) {
+            setTimeout(() => tryFocusInput(attempts + 1), 100);
+          }
+        };
+        tryFocusInput();
+      }
+      // Otherwise, let browser search work
     }
   };
 
@@ -174,6 +197,17 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
       this.clearSearch();
     }
   }
+
+  /*
+  onSearchInputChange() {
+    // Live search: perform search on every input change
+    if (!this.searchState.searchText.trim()) {
+      this.clearSearch();
+    } else {
+      this.performSearch();
+    }
+  }
+  */
 
   onSearchEnterKey() {
     // If we already have search results, navigate to next occurrence
@@ -645,6 +679,9 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
     this.fitToPage = !this.fitToPage;
     if (this.fitToPage) {
       this.zoom = 1.0;
+    } else {
+      // Set a default zoom when not fitting to page (e.g., previous or custom value)
+      this.zoom = 1.25;
     }
   }
 
