@@ -175,6 +175,17 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
     }
   }
 
+  /*
+  onSearchInputChange() {
+    // Live search: perform search on every input change
+    if (!this.searchState.searchText.trim()) {
+      this.clearSearch();
+    } else {
+      this.performSearch();
+    }
+  }
+  */
+
   onSearchEnterKey() {
     // If we already have search results, navigate to next occurrence
     if (this.searchState.hasSearchResults && this.searchState.totalSearchMatches > 0) {
