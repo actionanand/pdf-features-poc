@@ -645,6 +645,9 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
     this.fitToPage = !this.fitToPage;
     if (this.fitToPage) {
       this.zoom = 1.0;
+    } else {
+      // Set a default zoom when not fitting to page (e.g., previous or custom value)
+      this.zoom = 1.25;
     }
   }
 

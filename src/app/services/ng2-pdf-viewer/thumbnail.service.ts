@@ -42,7 +42,8 @@ export class ThumbnailService {
 
   private async generateThumbnail(pdfDocument: any, pageNumber: number): Promise<ThumbnailData> {
     const page = await pdfDocument.getPage(pageNumber);
-    const viewport = page.getViewport({ scale: 0.2 });
+    const viewport = page.getViewport({ scale: 0.3 });
+    // const viewport = page.getViewport({ scale: 0.8 }); // to increase thumbnail resolution
     
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
