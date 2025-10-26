@@ -102,8 +102,8 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
   // Subscribe to service state changes
   this.updateServiceStates();
 
-  // Listen for Ctrl+F to focus custom search box
-  window.addEventListener('keydown', this.handleCtrlF);
+  // Listen for Ctrl+F only when PDF area is focused
+  document.addEventListener('keydown', this.handleCtrlF, true);
   }
 
   ngOnDestroy() {
@@ -118,7 +118,7 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
     }
 
   // Remove Ctrl+F listener
-    window.removeEventListener('keydown', this.handleCtrlF);
+  document.removeEventListener('keydown', this.handleCtrlF, true);
     // Clean up timeout
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
@@ -127,27 +127,33 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Handle Ctrl+F to focus custom PDF search box
+   * Handle Ctrl+F to focus custom PDF search box only if PDF area is focused
    */
   private handleCtrlF = (event: KeyboardEvent) => {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') {
-      event.preventDefault();
-      // Show toolbar if hidden
-      if (!this.showToolbar) {
-        this.showToolbar = true;
-        this.cdr.detectChanges();
-      }
-      // Focus the search input in the toolbar
-      const tryFocusInput = (attempts = 0) => {
-        const input = document.querySelector('.pdf-toolbar .search-input') as HTMLInputElement;
-        if (input && input.offsetParent !== null) {
-          input.focus();
-          input.select();
-        } else if (attempts < 5) {
-          setTimeout(() => tryFocusInput(attempts + 1), 100);
+      // Check if PDF area or toolbar is focused
+      const pdfArea = document.querySelector('.pdf-viewer-area');
+      const active = document.activeElement;
+      if (pdfArea && (pdfArea.contains(active) || (active && active.classList.contains('search-input')))) {
+        event.preventDefault();
+        // Show toolbar if hidden
+        if (!this.showToolbar) {
+          this.showToolbar = true;
+          this.cdr.detectChanges();
         }
-      };
-      tryFocusInput();
+        // Focus the search input in the toolbar
+        const tryFocusInput = (attempts = 0) => {
+          const input = document.querySelector('.pdf-toolbar .search-input') as HTMLInputElement;
+          if (input && input.offsetParent !== null) {
+            input.focus();
+            input.select();
+          } else if (attempts < 5) {
+            setTimeout(() => tryFocusInput(attempts + 1), 100);
+          }
+        };
+        tryFocusInput();
+      }
+      // Otherwise, let browser search work
     }
   };
 
