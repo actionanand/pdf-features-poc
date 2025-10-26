@@ -103,7 +103,10 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
   this.updateServiceStates();
 
   // Listen for Ctrl+F only when PDF area is focused
-  document.addEventListener('keydown', this.handleCtrlF, true);
+  // browser ctr + F only be detected by 
+  // window.addEventListener('keydown', this.handleCtrlF, true); 
+  // not by document.addEventListener('keydown', this.handleCtrlF, true);
+  window.addEventListener('keydown', this.handleCtrlF, true);
   }
 
   ngOnDestroy() {
@@ -118,7 +121,7 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
     }
 
   // Remove Ctrl+F listener
-  document.removeEventListener('keydown', this.handleCtrlF, true);
+  window.removeEventListener('keydown', this.handleCtrlF, true);
     // Clean up timeout
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
@@ -147,6 +150,20 @@ export class Ng2PdfViewerComponent implements OnInit, OnDestroy {
           if (input && input.offsetParent !== null) {
             input.focus();
             input.select();
+/*          // use this if browser search is still triggered
+            // Workaround: dispatch 'Escape' key event to close browser search after 1 second
+            setTimeout(() => {
+              const escEvent = new KeyboardEvent('keydown', {
+                key: 'Escape',
+                code: 'Escape',
+                keyCode: 27,
+                which: 27,
+                bubbles: true,
+                cancelable: true
+              });
+              document.dispatchEvent(escEvent);
+            }, 1000);
+*/
           } else if (attempts < 5) {
             setTimeout(() => tryFocusInput(attempts + 1), 100);
           }
