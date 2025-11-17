@@ -30,6 +30,10 @@ jobs:
         # Example: Inject environment variables into Angular's environment.ts
         sed -i "s|PASSWORD_HASH_PLACEHOLDER|${{ env.PASSWORD_HASH }}|g" src/environments/environment.ts
 
+    - name: Extract repository name from package.json
+      id: package
+      run: echo "name=$(node -p \"require('./package.json').name\")" >> $GITHUB_OUTPUT
+
     - name: Build Angular app for GitHub Pages
       run: yarn run build:gh --configuration=production
 
@@ -41,8 +45,8 @@ jobs:
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        base_href: /pdf-features-poc/   # make sure this corresponds to https://<your_username>.github.io/<base_href>/
-        deploy_branch: gh-pages 
-        publish_dir: dist/pdf-features-poc/browser
+        base_href: /${{ steps.package.outputs.name }}/   # make sure this corresponds to https://<your_username>.github.io/<base_href>/
+        deploy_branch: gh-pages
+        publish_dir: dist/${{ steps.package.outputs.name }}/browser
         enable_jekyll: true
         
