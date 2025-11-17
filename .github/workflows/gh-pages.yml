@@ -32,7 +32,7 @@ jobs:
 
     - name: Extract repository name from package.json
       id: package
-      run: echo "name=$(node -p \"require('./package.json').name\")" >> $GITHUB_OUTPUT
+      run: echo "name=$(node -p "require('./package.json').name")" >> $GITHUB_OUTPUT
 
     - name: Build Angular app for GitHub Pages
       run: yarn run build:gh --configuration=production
