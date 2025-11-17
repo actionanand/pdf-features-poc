@@ -13,6 +13,7 @@ import { NgxExtendedPdfViewerComponent } from './components/ngx-extended-pdf-vie
 import { VanillaPdfjsComponent } from './components/vanilla-pdfjs/vanilla-pdfjs.component';
 import { DualPdfViewerComponent } from './components/dual-pdf-viewer/dual-pdf-viewer.component';
 import { LockScreenComponent } from './components/lock-screen/lock-screen.component';
+import { ConsoleManagerComponent } from './console-manager/components/console-manager.component';
 
 
 @NgModule({
@@ -23,7 +24,8 @@ import { LockScreenComponent } from './components/lock-screen/lock-screen.compon
     NgxExtendedPdfViewerComponent,
     VanillaPdfjsComponent,
     DualPdfViewerComponent,
-    LockScreenComponent
+    LockScreenComponent,
+    ConsoleManagerComponent
   ],
   imports: [
     BrowserModule,

@@ -1,0 +1,108 @@
+<div class="console-manager-wrapper">
+  <!-- Floating Toggle Button -->
+  <button 
+    class="console-toggle-fab"
+    [class.active]="isConsoleEnabled"
+    (click)="toggleVisibility()"
+    title="{{ isConsoleEnabled ? 'Console: ON' : 'Console: OFF' }}"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M20 19V7H4v12h16m0-16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16m-7 14v-2h5v2h-5m-3.5-6L5.5 9l4-4 1.09 1.09L8.67 8.5H15v2H8.67l1.92 1.41L9.5 13Z"/>
+    </svg>
+    <span class="status-indicator" [class.enabled]="isConsoleEnabled"></span>
+  </button>
+
+  <!-- Console Manager Panel -->
+  <div class="console-manager-panel" [class.visible]="isVisible">
+    <div class="panel-header">
+      <div class="header-content">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="header-icon">
+          <path d="M20 19V7H4v12h16m0-16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16Z"/>
+        </svg>
+        <h3>Console Manager</h3>
+      </div>
+      <button class="close-btn" (click)="toggleVisibility()" title="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="panel-body">
+      <div class="status-section">
+        <div class="status-badge" [class.enabled]="isConsoleEnabled">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path *ngIf="isConsoleEnabled" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            <path *ngIf="!isConsoleEnabled" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          </svg>
+          <span class="status-text">
+            {{ isConsoleEnabled ? 'Console Enabled' : 'Console Disabled' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <p class="info-text">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="info-icon">
+            <path d="M13 9h-2V7h2m0 10h-2v-6h2m-1-9A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/>
+          </svg>
+          {{ isConsoleEnabled 
+            ? 'All console logs are currently visible in the browser console.' 
+            : 'Console logs are hidden. Enable to see debug information.' 
+          }}
+        </p>
+      </div>
+
+      <div class="controls-section">
+        <button 
+          *ngIf="!isConsoleEnabled"
+          class="control-btn enable-btn"
+          (click)="enableConsole()"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+          </svg>
+          Enable Console Logs
+        </button>
+
+        <button 
+          *ngIf="isConsoleEnabled"
+          class="control-btn disable-btn"
+          (click)="disableConsole()"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+          Disable Console Logs
+        </button>
+
+        <button 
+          class="control-btn toggle-btn"
+          (click)="toggleConsole()"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 16a4 4 0 0 1-4-4 4 4 0 0 1 4-4 4 4 0 0 1 4 4 4 4 0 0 1-4 4m0-10a6 6 0 0 0-6 6 6 6 0 0 0 6 6 6 6 0 0 0 6-6 6 6 0 0 0-6-6z"/>
+          </svg>
+          Toggle Console
+        </button>
+      </div>
+
+      <div class="tip-section">
+        <div class="tip-header">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+          <span>Pro Tip</span>
+        </div>
+        <p class="tip-text">
+          You can also toggle console logs via browser console:<br>
+          <code>localStorage.setItem('enableLog', 'ON')</code><br>
+          Then refresh the page.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backdrop -->
+  <div class="backdrop" *ngIf="isVisible" (click)="toggleVisibility()"></div>
+</div>
