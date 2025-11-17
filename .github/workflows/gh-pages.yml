@@ -23,8 +23,15 @@ jobs:
     - name: Install dependencies
       run: yarn install
 
-    - name: Build for gh-page
-      run: yarn run build:gh
+    - name: Inject environment variables into Angular
+      env: # Step-level environment variables
+        PASSWORD_HASH: ${{ secrets.PASSWORD_HASH }} # Ensure this secret is set in your repository settings
+      run: |
+        # Example: Inject environment variables into Angular's environment.ts
+        sed -i "s|PASSWORD_HASH_PLACEHOLDER|${{ env.PASSWORD_HASH }}|g" src/environments/environment.ts
+
+    - name: Build Angular app for GitHub Pages
+      run: yarn run build:gh --configuration=production
 
     - name: Copy error files to redirect to home
       run: yarn run copy-error-page
